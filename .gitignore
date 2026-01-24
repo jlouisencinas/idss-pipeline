@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Downloads folder (temporary files)
+downloads/
+
+# Sensitive credentials
+credentials.json
+credentials1.json
+client_secrets.json
+service_account.json
+token.json
+
+# Backup or test folders
+test_input/
