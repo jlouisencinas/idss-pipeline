@@ -1,78 +1,66 @@
 name: Run IDSS Pipeline
 
-# When to run
 on:
   schedule:
-    - cron: '0 2 * * *'  # Every day at 2:00 UTC
-  workflow_dispatch:      # Manual trigger allowed
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   run-scripts:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3️⃣ Debug: show repo structure
       - name: Show repo files (debug)
         run: |
           pwd
           ls -la
-          ls -la IDSS\ Automation
 
-      # 4️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r IDSS\ Automation/requirements.txt
+          pip install -r requirements.txt
 
-      # 5️⃣ Recreate Gmail credentials file
       - name: Create Gmail credentials
         run: |
-          echo '${{ secrets.GMAIL_CREDENTIALS }}' > 'IDSS Automation/credentials1.json'
+          echo '${{ secrets.GMAIL_CREDENTIALS }}' > credentials1.json
 
-      # 6️⃣ Recreate Drive/Sheets credentials file
       - name: Create Drive credentials
         run: |
-          echo '${{ secrets.GDRIVE_CREDENTIALS }}' > 'IDSS Automation/credentials.json'
+          echo '${{ secrets.GDRIVE_CREDENTIALS }}' > credentials.json
 
-      # 7️⃣ Create client secrets file
       - name: Create client secrets
         run: |
-          echo '${{ secrets.CLIENT_SECRETS_JSON }}' > 'IDSS Automation/client_secrets.json'
+          echo '${{ secrets.CLIENT_SECRETS_JSON }}' > client_secrets.json
 
-      # 8️⃣ Verify JSON files (optional but recommended)
       - name: Verify JSON files
         run: |
           python - <<EOF
-          import json, os
-          for f in ["IDSS Automation/credentials1.json", "IDSS Automation/credentials.json", "IDSS Automation/client_secrets.json"]:
+          import json
+          for f in ["credentials1.json", "credentials.json", "client_secrets.json"]:
               with open(f) as fp:
                   json.load(fp)
           print("All JSON credentials valid")
           EOF
 
-      # 9️⃣ Run your scripts in order
       - name: Run download_IDSS.py
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python IDSS\ Automation/download_IDSS.py
+        run: python download_IDSS.py
 
       - name: Run processIDSS.py
-        run: python IDSS\ Automation/processIDSS.py
+        run: python processIDSS.py
 
       - name: Run run_pipeline.py
-        run: python IDSS\ Automation/run_pipeline.py
+        run: python run_pipeline.py
 
-      # 10️⃣ Optional: final debug after run
       - name: List files after pipeline
-        run: ls -la "IDSS Automation"
+        run: ls -la
