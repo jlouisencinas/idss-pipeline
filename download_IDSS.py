@@ -31,27 +31,50 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
+# # ================= AUTH =================
+# def get_gmail_service():
+#     base_dir = os.path.dirname(os.path.abspath(__file__))
+#     creds_path = os.path.join(base_dir, "credentials1.json")
+#     token_path = os.path.join(base_dir, "token.json")
+#     creds = None
+
+#     if os.path.exists(token_path):
+#         creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
+#     if not creds or not creds.valid:
+#         if creds and creds.expired and creds.refresh_token:
+#             creds.refresh(Request())
+#         else:
+#             flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
+#             creds = flow.run_local_server(port=0)
+
+#         with open(token_path, "w") as token_file:
+#             token_file.write(creds.to_json())
+
+#     return build("gmail", "v1", credentials=creds)
+
 # ================= AUTH =================
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+
 def get_gmail_service():
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    creds_path = os.path.join(base_dir, "credentials1.json")
-    token_path = os.path.join(base_dir, "token.json")
-    creds = None
+    creds_path = os.path.join(base_dir, "credentials1.json")  # this is your service account JSON
+    SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    # Load service account credentials
+    creds = Credentials.from_service_account_file(
+        creds_path,
+        scopes=SCOPES
+    )
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
-            creds = flow.run_local_server(port=0)
+    # Impersonate the user mailbox (replace with your actual Gmail address)
+    delegated_creds = creds.with_subject("plukfloroespiritu@gmail.com")
 
-        with open(token_path, "w") as token_file:
-            token_file.write(creds.to_json())
+    # Build Gmail service
+    service = build("gmail", "v1", credentials=delegated_creds)
+    return service
 
-    return build("gmail", "v1", credentials=creds)
 
 # ================= FETCH MESSAGES =================
 def fetch_latest_idss_messages(service, subject_regex, query_subject, max_messages=30, retries=3):
