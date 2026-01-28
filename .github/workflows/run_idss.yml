@@ -2,65 +2,77 @@ name: Run IDSS Pipeline
 
 on:
   schedule:
-    - cron: '0 2 * * *'
-  workflow_dispatch:
+    - cron: '0 2 * * *'  # runs daily at 2 AM
+  workflow_dispatch:      # allows manual trigger
 
 jobs:
   run-scripts:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Show repo files (debug)
+      # 3. Show repo files (debug)
+      - name: Show repo files
         run: |
           pwd
           ls -la
 
+      # 4. Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create Gmail credentials
+      # 5. Create Gmail service account JSON from secret
+      - name: Create Gmail service account credentials
         run: |
-          echo '${{ secrets.GMAIL_CREDENTIALS }}' > credentials1.json
+          echo '${{ secrets.GMAIL_SERVICE_ACCOUNT }}' > service_account.json
 
+      # 6. Create Google Drive credentials JSON from secret
       - name: Create Drive credentials
         run: |
           echo '${{ secrets.GDRIVE_CREDENTIALS }}' > credentials.json
 
+      # 7. Create client secrets JSON from secret
       - name: Create client secrets
         run: |
           echo '${{ secrets.CLIENT_SECRETS_JSON }}' > client_secrets.json
 
+      # 8. Verify all JSON files are valid
       - name: Verify JSON files
         run: |
           python - <<EOF
           import json
-          for f in ["credentials1.json", "credentials.json", "client_secrets.json"]:
+          for f in ["service_account.json", "credentials.json", "client_secrets.json"]:
               with open(f) as fp:
                   json.load(fp)
           print("All JSON credentials valid")
           EOF
 
+      # 9. Run IDSS Gmail download script
       - name: Run download_IDSS.py
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: python download_IDSS.py
 
+      # 10. Run processing script
       - name: Run processIDSS.py
         run: python processIDSS.py
 
+      # 11. Run pipeline script
       - name: Run run_pipeline.py
         run: python run_pipeline.py
 
+      # 12. List files after pipeline (debug)
       - name: List files after pipeline
         run: ls -la
