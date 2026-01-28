@@ -38,7 +38,7 @@ jobs:
 
       - name: Create Gmail credentials (optional)
         run: |
-          echo '${{ secrets.GMAIL_CREDENTIALS }}' > credentials1.json
+          printf '%s' "${{ secrets.GMAIL_CREDENTIALS }}" > credentials1.json
 
       - name: Verify JSON files
         run: |
